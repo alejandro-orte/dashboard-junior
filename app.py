@@ -71,6 +71,25 @@ st.markdown(
         line-height:1.5;
     }
     .bug-banner b {color:#0b0b0b;}
+    table.detail {width:100%; border-collapse:collapse; font-size:0.92rem;}
+    table.detail th {
+        text-align:left; color:#898781; font-weight:600; font-size:0.72rem;
+        text-transform:uppercase; letter-spacing:0.02em; padding:8px 10px;
+        border-bottom:1px solid #e1e0d9;
+    }
+    table.detail td {padding:9px 10px; border-bottom:1px solid #e1e0d9; color:#0b0b0b;}
+    table.detail tr:last-child td {border-bottom:none;}
+    table.detail tr:hover td {background:#f9f9f7;}
+    .tag {
+        display:inline-block; padding:2px 10px; border-radius:999px;
+        font-size:0.72rem; font-weight:700; letter-spacing:0.01em;
+    }
+    .tag-negado {background:#d03b3b; color:#fff;}
+    .tag-cosite {background:#fab219; color:#0b0b0b;}
+    .detail-card {
+        background:#fcfcfb; border:1px solid rgba(11,11,11,0.08); border-radius:10px;
+        padding:4px 14px; max-height:360px; overflow-y:auto;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -303,9 +322,29 @@ with col_b:
         + [{"Sitio": r["sitio"], "Zona": r["zona"], "Estado": "Cosite"} for r in metrics["cosite_detalle"]]
     )
     df = pd.DataFrame(rows)
-    if zonas_sel:
+    if zonas_sel and not df.empty:
         df = df[df["Zona"].isin(zonas_sel)]
-    st.dataframe(df, use_container_width=True, hide_index=True)
+
+    if df.empty:
+        st.caption("No hay sitios negados ni en cosite para el filtro actual. ✅")
+    else:
+        tag_class = {"Negado": "tag-negado", "Cosite": "tag-cosite"}
+        html_rows = "".join(
+            f"<tr><td>{r.Sitio}</td><td>{r.Zona}</td>"
+            f"<td><span class='tag {tag_class[r.Estado]}'>{r.Estado}</span></td></tr>"
+            for r in df.itertuples()
+        )
+        st.markdown(
+            f"""
+            <div class="detail-card">
+            <table class="detail">
+                <thead><tr><th>Sitio</th><th>Zona</th><th>Estado</th></tr></thead>
+                <tbody>{html_rows}</tbody>
+            </table>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 with st.expander("📋 Ver tabla completa (equivalente a la pestaña Resumen)"):
     df_resumen = pd.DataFrame({z: matrix[z] for z in zonas}).T
